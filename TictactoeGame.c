@@ -22,13 +22,11 @@ int main()
         playerMove();
         if (checkWin(PLAYER) == PLAYER || checkWin(COMPUTER) == COMPUTER)
         {
-            printf("\n///// COMPUTER WINS! /////");
             break; // If one of the players wins, the game ends, otherwise it goes until the board is filled
         }
         computerMove();
         if (checkWin(PLAYER) == PLAYER || checkWin(COMPUTER) == COMPUTER)
         {
-            printf("\n///// PLAYER WINS! /////");
             break; // If one of the players wins, the game ends, otherwise it goes until the board is filled
         }
         printBoard();
@@ -37,7 +35,8 @@ int main()
     return 0;
 }
 
-void resetBoard() {
+void resetBoard()
+{
     for (int row = 0; row < 3; row++)
     {
         for (int column = 0; column < 3; column++)
@@ -47,7 +46,8 @@ void resetBoard() {
     }
 }
 
-void printBoard() {
+void printBoard()
+{
     for (int row = 0; row < 3; row++)
     {
         for (int column = 0; column < 3; column++)
@@ -58,7 +58,8 @@ void printBoard() {
     }
 }
 
-void playerMove() {
+void playerMove()
+{
     int row = 0;
     int column = 0;
     int validChoice = 0;
@@ -116,15 +117,12 @@ int evaluateBoard(char board[][3])
 
 int moveSearch(char board[][3], int depth, char lastPlayer)
 {
-    // Works 90% of the time. There is a bug regarding some circumstances
-    // such as when the player is close to getting a three in a row, sometimes
-    // the bot can win but chooses instead to stop the said three in a row.
-
-    // Function currently has no pruning whatsoever, still a WIP
+    /* Minimax algorithm in which the bot tries to lower its score as much
+    as possible while the "player" tries to maximize it.*/
     int score, WinMultiplier;
     WinMultiplier = (lastPlayer == COMPUTER) ? -1 : 1;
     int scoreMinMax = WinMultiplier * 100;
-
+    
     if (checkWin(lastPlayer) == lastPlayer) return (WinMultiplier * 42);
     if (depth == 0) return evaluateBoard(board);
 
@@ -176,6 +174,12 @@ void computerMove()
         {
             if (board[row][column] != EMPTY_SPACE) continue;
             board[row][column] = COMPUTER;
+            if (checkWin(COMPUTER) == COMPUTER)
+            { // Serves as a way to correct for human unpredictability, so that it takes any
+              // chance to win it gets
+                printBoard();
+                return;
+            }
             score = moveSearch(board, numEmptySquares - 1, COMPUTER);
             if (scoreMinMax > score) scoreMinMax = score, play[0] = row, play[1] = column;
             board[row][column] = EMPTY_SPACE;

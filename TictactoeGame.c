@@ -4,6 +4,7 @@ char board[3][3]; // Currently using a global variable, will change that later p
 const char PLAYER = 'X';
 const char COMPUTER = 'O';
 const char EMPTY_SPACE = '_';
+const int SCORE_BOARD[3][3] = {{3, 2, 3}, {2, 4, 2}, {3, 2, 3}};
 
 void resetBoard();
 void printBoard();
@@ -27,7 +28,7 @@ int main()
         computerMove();
         if (checkWin(PLAYER) == PLAYER || checkWin(COMPUTER) == COMPUTER)
         {
-            break; // If one of the players wins, the game ends, otherwise it goes until the board is filled
+            break;
         }
         printBoard();
     } while(emptySquares() != 0);
@@ -37,6 +38,9 @@ int main()
 
 void resetBoard()
 {
+    /* Returns a 3x3 matrix representative of a tictactoe board to its default state
+    which is considered to be when it is fully filled with whatever char the constant
+    EMPTY_SPACE represents (in this case its: "_") */
     for (int row = 0; row < 3; row++)
     {
         for (int column = 0; column < 3; column++)
@@ -48,6 +52,8 @@ void resetBoard()
 
 void printBoard()
 {
+    /* Prints a 3x3 matrix that is used to represent the board of a
+    tictactoe game */
     for (int row = 0; row < 3; row++)
     {
         for (int column = 0; column < 3; column++)
@@ -60,6 +66,8 @@ void printBoard()
 
 void playerMove()
 {
+    /* Takes the row and column chosen by the player and, if they are valid,
+    sets the value of the board at that position to the value of the const PLAYER */
     int row = 0;
     int column = 0;
     int validChoice = 0;
@@ -91,27 +99,19 @@ void playerMove()
 
 int evaluateBoard(char board[][3])
 {
-    // I still have to find a better way to sum up the values
-    // However, this works for now, and it works decently quick.
+    /* Evaluates the score of the game board, subtracting points if
+    a square is filled by the computer and adding if its filled by the player.
+    Each square has its own value proportional to the number of threes in a row
+    passing through it. */
     int score = 0;
-    if (board[0][0] == COMPUTER) score -= 3;
-    if (board[0][1] == COMPUTER) score -= 2;
-    if (board[0][2] == COMPUTER) score -= 3;
-    if (board[1][0] == COMPUTER) score -= 2;
-    if (board[1][1] == COMPUTER) score -= 4;
-    if (board[1][2] == COMPUTER) score -= 2;
-    if (board[2][0] == COMPUTER) score -= 3;
-    if (board[2][1] == COMPUTER) score -= 2;
-    if (board[2][2] == COMPUTER) score -= 3;
-    if (board[0][0] == PLAYER) score += 3;
-    if (board[0][1] == PLAYER) score += 2;
-    if (board[0][2] == PLAYER) score += 3;
-    if (board[1][0] == PLAYER) score += 2;
-    if (board[1][1] == PLAYER) score += 4;
-    if (board[1][2] == PLAYER) score += 2;
-    if (board[2][0] == PLAYER) score += 3;
-    if (board[2][1] == PLAYER) score += 2;
-    if (board[2][2] == PLAYER) score += 3;
+    for (int row = 0; row < 3; row++)
+    {
+        for (int column = 0; column < 3; column++)
+        { // The score_board defined at the start is used to quickly sum the values
+            if (board[row][column] == PLAYER) score += SCORE_BOARD[row][column];
+            if (board[row][column] == COMPUTER) score -= SCORE_BOARD[row][column];
+        }
+    }
     return score;
 }
 
@@ -120,10 +120,11 @@ int moveSearch(char board[][3], int depth, char lastPlayer)
     /* Minimax algorithm in which the bot tries to lower its score as much
     as possible while the "player" tries to maximize it.*/
     int score, WinMultiplier;
-    WinMultiplier = (lastPlayer == COMPUTER) ? -1 : 1;
-    int scoreMinMax = WinMultiplier * 100;
+    WinMultiplier = (lastPlayer == COMPUTER) ? 1 : -1;
+    int scoreMinMax = -(WinMultiplier * 100); // Initializes the score in a way it will always be changed
+                                              // to the first score calculated
     
-    if (checkWin(lastPlayer) == lastPlayer) return (WinMultiplier * 42);
+    if (checkWin(lastPlayer) == lastPlayer) return -(WinMultiplier * 42);
     if (depth == 0) return evaluateBoard(board);
 
     for (int row = 0; row < 3; row++)
@@ -132,17 +133,17 @@ int moveSearch(char board[][3], int depth, char lastPlayer)
         {
             if (board[row][column] != EMPTY_SPACE) continue;
             if (lastPlayer == PLAYER)
-            {
+            { // If the Player last played, then it must be the computer's turn
                 board[row][column] = COMPUTER;
                 score = moveSearch(board, depth - 1, COMPUTER);
-                if (scoreMinMax > score) scoreMinMax = score;
+                if (scoreMinMax > score) scoreMinMax = score; // Finds the minimum score
                 board[row][column] = EMPTY_SPACE;
             }
             else
-            {
+            { // Opposite case
                 board[row][column] = PLAYER;
                 score = moveSearch(board, depth - 1, PLAYER);
-                if (scoreMinMax < score) scoreMinMax = score;
+                if (scoreMinMax < score) scoreMinMax = score; // Finds the maximum score
                 board[row][column] = EMPTY_SPACE;
             }
         }
@@ -152,11 +153,14 @@ int moveSearch(char board[][3], int depth, char lastPlayer)
 
 void computerMove()
 {
+    /* Finds out the best possible move the computer can play to either secure its
+    win or at the very least a draw */
     int score, scoreMinMax = 100, play[2];
     int numEmptySquares = emptySquares();
 
     if (numEmptySquares == 8 || numEmptySquares == 9)
     { // Either plays on the center or the top left corner as a first move
+      // Much faster this way and it doesn't really matter where it first plays
         if (board[1][1] == EMPTY_SPACE)
         {
             board[1][1] = COMPUTER;
@@ -169,7 +173,8 @@ void computerMove()
     }
 
     for (int row = 0; row < 3; row++)
-    { // Assigns a value to each play using a minimax algorithm set up in the previous function
+    { // Assigns a value to each possible play and takes the one
+      // with the lowest score (see evaluateBoard score meaning)
         for (int column = 0; column < 3; column++)
         {
             if (board[row][column] != EMPTY_SPACE) continue;
@@ -191,6 +196,8 @@ void computerMove()
 
 int emptySquares()
 {
+    /* Gets how many empty squares there are currently on the board.
+    Very useful as a stopping condition or for finding out the depth for moveSearch */
     int emptySquares = 0;
     for (int row = 0; row < 3; row++)
     {
@@ -207,6 +214,8 @@ int emptySquares()
 
 char checkWin(char winner)
 {
+    /* Checks if there are any three in a rows associated to the winner given by the
+    parameter. It will either return the winner if he indeed wins or the const EMPTY_SPACE */
     for (int row = 0; row < 3; row++)
     { // Checks for a win in every row and column "at the same time" so to speak
         int row_counter = 0;

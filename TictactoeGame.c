@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 const char PLAYER = 'X';
 const char COMPUTER = 'O';
@@ -21,15 +23,17 @@ int main()
 {
     char board[3][3];
     short difficulty = chooseDifficulty();
+    srand(time(0));
     resetBoard(board); // Makes sure to initialize the board with EMPTY_SPACE
-    printBoard(board);
+    if (rand() % 2 == 0) computerMove(board, difficulty);
+    //printBoard(board);
     do {
+        printBoard(board);
         playerMove(board);
         if (announceWinner(board) != 0) return 0; // checks if the player won
         if (emptySquares(board) == 0) break; // checks if full before letting the computer play
         computerMove(board, difficulty);
         if (announceWinner(board) != 0) return 0; // checks if the computer won
-        printBoard(board);
     } while(emptySquares(board) != 0);
     printBoard(board);
     printf("\n///// It's a DRAW! /////\n");
